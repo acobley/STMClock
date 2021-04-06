@@ -32,7 +32,7 @@ byte MaxMode = 5;
 int encAVal,  encBVal;
 int encAVal2,  encBVal2;
 
-int encALast[]={0,0,0,0,0,0};
+int encALast=0;
 int encALast2[]={0,0,0,0,0,0};
 
 HardwareTimer MainTimer(1);
@@ -77,10 +77,10 @@ long ms15 = 015000L;
 const short MinTempo = 30;
 const short MaxTempo = 600;
 const double Ratios[] = {1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6, 7, 8};
-const short RatiosLength = 11;
+const short RatiosArrayLength = 11;
 short currentRatioPos = 2;
 float Ratio = Ratios[currentRatioPos];
-short maxRatio = 10;
+//short maxRatio = 10;
 
 
 
@@ -114,6 +114,12 @@ int CY = 0;
 int Width = 8;
 int Height = 8;
 
+int PlotWidth= 8*8-2;
+int PlotHeight=5*8-2;
+int PlotMiddle =PlotHeight/2+3*8;
+int PlotLeft=PlotWidth+1;
+
+int LastOscDisp=0; //keeps a record of the last osc to change shape or waveshape
 
 void SetupEncoders() {
   pinMode(encA, INPUT);

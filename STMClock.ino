@@ -34,6 +34,14 @@
 #include "Display.h"
 #include "LFO.h"
 
+
+unsigned long currentMillis = millis();
+unsigned long previousMillis = 0;
+unsigned long enc2Millis = 0;
+unsigned long enc1Millis = 0;
+const long interval = 500;
+const long enc2Interval = 50;
+
 //Low level routines to handle the timers.
 //See https://www.st.com/content/ccc/resource/training/technical/product_training/c4/1b/56/83/3a/a1/47/64/STM32L4_WDG_TIMERS_GPTIM.pdf/files/STM32L4_WDG_TIMERS_GPTIM.pdf/jcr:content/translations/en.STM32L4_WDG_TIMERS_GPTIM.pdf
 //Page 31 and 32
@@ -85,8 +93,8 @@ void SetupSwitches() {
 
   attachInterrupt(BUT2, iMode, FALLING);
   attachInterrupt(BUT1, iTempo, FALLING);
-attachInterrupt(START, IntReset, RISING);
- 
+  attachInterrupt(START, IntReset, RISING);
+
   attachInterrupt(RESET, IntReset, RISING);
 }
 
@@ -107,12 +115,12 @@ void SetupTimers() {
 
 }
 
-boolean rb=false;
+boolean rb = false;
 void IntReset() {
   oscReset();
   digitalWrite(BUTLED3, rb);
-  rb=!rb;
-  
+  rb = !rb;
+
 }
 
 
@@ -128,15 +136,16 @@ void setup() {
   SetupSwitches();
   SetupGates();
   setShape(0);
-  //setShape(1);
+  setShape(1);
   digitalWrite(BUTLED3, false);
   DisplayBackground();
   SetFrequency(Tempo, CurrentNotePos[0], 0);
   SetFrequency(Tempo, CurrentNotePos[1], 1);
-  SetVolume(Volume[0],0);
-SetVolume(Volume[1],1);
-DisplayWaveShape(0,oscParams[0].WaveShape);
-DisplayWaveShape(1,oscParams[0].WaveShape);
+  SetVolume(Volume[0], 0);
+  SetVolume(Volume[1], 1);
+  DisplayWaveShape(0, oscParams[0].WaveShape);
+  DisplayWaveShape(1, oscParams[0].WaveShape);
+  DisplayWave(0);
 }
 
 
@@ -232,13 +241,10 @@ void setTempo(int newTempo) {
   //CalcTCounters(BaseTime, MainTimer, &SequencePWMS, SeqGateTime);
   Tempo2 = Ratio * Tempo;
   DisplayTempo() ;
-  SetFrequency(Tempo, CurrentNotePos[0], 0);
-  SetFrequency(Tempo, CurrentNotePos[1], 1);
+  SetFrequency(Tempo, CurrentNotePos[0], LastOscDisp);
+  //SetFrequency(Tempo, CurrentNotePos[1], 1);
 }
 
-unsigned long currentMillis = millis();
-unsigned long previousMillis = 0;
-const long interval = 500;
 
 
 void iTempo() {
@@ -272,19 +278,20 @@ void iMode() {
     DisplayMode();
   }
   interrupts();
+  WriteEEProm();
 }
 
 
-int encodeVal(int val,int Diff) {
+int encodeVal(int val, int Diff) {
   encAVal = digitalRead(encA);
   encBVal = digitalRead(encB);
-  if (encAVal != encALast[Mode]) {
+  if (encAVal != encALast) {
     if (encAVal == encBVal) {
-      val=val-Diff;
+      val = val - Diff;
     } else {
-      val=val+Diff;
+      val = val + Diff;
     }
-    encALast[Mode] = encAVal;
+    encALast = encAVal;
 
   }
   return val;
@@ -292,25 +299,36 @@ int encodeVal(int val,int Diff) {
 
 
 
-int encodeVal2(int val,int Diff) {
+int encodeVal2(int val, int Diff) {
   encAVal2 = digitalRead(enc2A);
   encBVal2 = digitalRead(enc2B);
   if (encAVal2 != encALast2[Mode]) {
     if (encAVal2 == encBVal2) {
-      val=val-Diff;
+      val = val - Diff;
     } else {
-      val=val+Diff;
+      val = val + Diff;
     }
     encALast2[Mode] = encAVal2;
 
   }
   return val;
 }
+
+/*      Handle Encoder 1*/
+
 void handleEnc1() {
+  /*
+    currentMillis = millis();
+
+    if (currentMillis - enc1Millis < enc2Interval) {
+    return;
+    }
+    enc1Millis=currentMillis;
+  */
   switch (Mode) {
 
     case 0:  //Tempo
-      NewEncPos = encodeVal(Tempo,1);
+      NewEncPos = encodeVal(Tempo, 1);
       if (NewEncPos != Tempo) {
         if (NewEncPos < MinTempo) {
           NewEncPos = MinTempo;
@@ -322,13 +340,13 @@ void handleEnc1() {
       }
       break;
     case 1: //Ratio of gate pulses for ratching
-      NewEncPos = encodeVal(currentRatioPos,1);
+      NewEncPos = encodeVal(currentRatioPos, 1);
       if (NewEncPos != currentRatioPos) {
         if (NewEncPos < 0) {
           NewEncPos = 0;
         }
-        if (NewEncPos >= maxRatio ) {
-          NewEncPos = maxRatio;
+        if (NewEncPos >= RatiosArrayLength ) {
+          NewEncPos = RatiosArrayLength;
         }
         currentRatioPos = NewEncPos;
         Ratio = Ratios[NewEncPos];
@@ -338,7 +356,7 @@ void handleEnc1() {
       }
       break;
     case 2: //Frequency of F1
-      NewEncPos = encodeVal(CurrentNotePos[0],1);
+      NewEncPos = encodeVal(CurrentNotePos[0], 1);
       if (NewEncPos != CurrentNotePos[0]) {
         if (NewEncPos < 0) {
           NewEncPos = 0;
@@ -351,7 +369,7 @@ void handleEnc1() {
       }
       break;
     case 3: //Frequency of F2
-      NewEncPos = encodeVal(CurrentNotePos[1],1);
+      NewEncPos = encodeVal(CurrentNotePos[1], 1);
       if (NewEncPos != CurrentNotePos[1]) {
         if (NewEncPos < 0) {
           NewEncPos = 0;
@@ -364,8 +382,8 @@ void handleEnc1() {
       }
       break;
     case 4:  //Waveshape F1
-       NewEncPos = encodeVal(oscParams[0].WaveShape,1);
-       if (NewEncPos != oscParams[0].WaveShape) {
+      NewEncPos = encodeVal(oscParams[0].WaveShape, 1);
+      if (NewEncPos != oscParams[0].WaveShape) {
         if (NewEncPos < 0) {
           NewEncPos = 0;
         }
@@ -373,12 +391,12 @@ void handleEnc1() {
           NewEncPos = 3;
         }
         setWaveShape(0, NewEncPos);
-
+        LastOscDisp = 0;
       }
       break;
     case 5:  //Waveshape F1
-       NewEncPos = encodeVal(oscParams[0].Shape,20);
-       if (NewEncPos != oscParams[0].Shape) {
+      NewEncPos = encodeVal(oscParams[0].Shape, 20);
+      if (NewEncPos != oscParams[0].Shape) {
         if (NewEncPos < 0) {
           NewEncPos = 0;
         }
@@ -386,10 +404,11 @@ void handleEnc1() {
           NewEncPos = 4094;
         }
         oscParams[0].Shape = NewEncPos;
+        LastOscDisp = 0;
         setShape(0);
-        
+
       }
-      break;  
+      break;
     default: break;
   }
 }
@@ -397,12 +416,20 @@ void handleEnc1() {
 
 
 void handleEnc2() {
+  /*
+    currentMillis = millis();
+
+    if (currentMillis - enc2Millis < enc2Interval) {
+    return;
+    }
+    enc2Millis=currentMillis;
+  */
   long Time = 1000000L * 60 / Tempo;
   switch (Mode) {
 
-    case 0:  //Tempo
+    case 0:  //Gatelength;
 
-      NewEncPos2 = encodeVal2(GateLength,1);
+      NewEncPos2 = encodeVal2(GateLength, 1);
       if (NewEncPos2 != encPos2) {
         encPos2 = NewEncPos2;
         if (encPos2 < 1) {
@@ -421,7 +448,7 @@ void handleEnc2() {
       break;
 
     case 2: //Volume  of F1
-      NewEncPos2 = encodeVal2(Volume[0],10);
+      NewEncPos2 = encodeVal2(Volume[0], 10);
       if (NewEncPos2 != Volume[0]) {
         if (NewEncPos2 < 0) {
           NewEncPos2 = 0;
@@ -434,7 +461,7 @@ void handleEnc2() {
       }
       break;
     case 3: //Volume  of F2
-      NewEncPos2 = encodeVal2(Volume[1],10);
+      NewEncPos2 = encodeVal2(Volume[1], 10);
       if (NewEncPos2 != Volume[1]) {
         if (NewEncPos2 < 0) {
           NewEncPos2 = 0;
@@ -446,21 +473,22 @@ void handleEnc2() {
         SetVolume(Volume[1], 1);
       }
       break;
-case 4:  //Waveshape F2
-       NewEncPos = encodeVal2(oscParams[1].WaveShape,1);
-       if (NewEncPos != oscParams[1].WaveShape) {
+    case 4:  //Waveshape F2
+      NewEncPos = encodeVal2(oscParams[1].WaveShape, 1);
+      if (NewEncPos != oscParams[1].WaveShape) {
         if (NewEncPos < 0) {
           NewEncPos = 0;
         }
         if (NewEncPos >= 3) { //See lfo.h
           NewEncPos = 3;
         }
-         setWaveShape(1, NewEncPos);
+        LastOscDisp = 1;
+        setWaveShape(1, NewEncPos);
       }
       break;
-      case 5:  //Waveshape F2
-       NewEncPos = encodeVal2(oscParams[1].Shape,20);
-       if (NewEncPos != oscParams[1].Shape) {
+    case 5:  //Waveshape F2
+      NewEncPos = encodeVal2(oscParams[1].Shape, 20);
+      if (NewEncPos != oscParams[1].Shape) {
         if (NewEncPos < 0) {
           NewEncPos = 0;
         }
@@ -468,10 +496,11 @@ case 4:  //Waveshape F2
           NewEncPos = 4094;
         }
         oscParams[1].Shape = NewEncPos;
+        LastOscDisp = 1;
         setShape(1);
-        
+
       }
-      break;  
+      break;
     default: break;
   }
 
