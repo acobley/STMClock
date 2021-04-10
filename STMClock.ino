@@ -29,6 +29,7 @@
 
 
 #include "HardwareTimer.h"
+#include "const.h"
 #include "Setup.h"
 
 #include "Display.h"
@@ -392,6 +393,7 @@ void handleEnc1() {
         }
         setWaveShape(0, NewEncPos);
         LastOscDisp = 0;
+         DisplayWaveShape(0, NewEncPos);
       }
       break;
     case 5:  //Waveshape F1
@@ -406,7 +408,7 @@ void handleEnc1() {
         oscParams[0].Shape = NewEncPos;
         LastOscDisp = 0;
         setShape(0);
-
+        
       }
       break;
     default: break;
@@ -484,6 +486,7 @@ void handleEnc2() {
         }
         LastOscDisp = 1;
         setWaveShape(1, NewEncPos);
+        DisplayWaveShape(1, NewEncPos);
       }
       break;
     case 5:  //Waveshape F2
@@ -498,7 +501,7 @@ void handleEnc2() {
         oscParams[1].Shape = NewEncPos;
         LastOscDisp = 1;
         setShape(1);
-
+        
       }
       break;
     default: break;

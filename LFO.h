@@ -1,9 +1,8 @@
 
-const float Pi = 3.14159;
+
 float step = Pi / (256.0);
 int Value = 0;
-float dacRange = 4095.0;
-float twoPi = 2.0 * Pi;
+
 
 float Wave = 0;
 int Square = 0;
@@ -32,11 +31,11 @@ typedef struct {
   long SamplesPhase2;
 } oscParam ;
 
-oscParam oscParams[] = {{ 0.0, 2048, 2 * Pi / 2048.0, 2 * Pi / (2048), 40.0, 0, 4095},
-  { 0.0, 2048, 2 * Pi / 2048.0, 2 * Pi / (2048), 160.0, 3, 4095}
+oscParam oscParams[] = {{ 0.0, 2048, 2 * Pi / 2048.0, 2 * Pi / (2048), 40.0, 0, idacRange},
+  { 0.0, 2048, 2 * Pi / 2048.0, 2 * Pi / (2048), 160.0, 3, idacRange}
 };
 
-int Volume[2] = {4095, 4095};
+int Volume[2] = {idacRange, idacRange};
 
 void writeSin(float Value, int Channel) {
   int Out = (int)(Volume[Channel] * Value);
@@ -80,13 +79,13 @@ void DisplayWave(int Osc) {
   Erase(CX , CY, CX2 , CY2);
   float rad = 0;
   int  WaveShape= oscParams[Osc].WaveShape;
-  DisplayWaveShape(Osc, WaveShape);
-  CX = 11 * 8;
+  //DisplayWaveShape(Osc, WaveShape);
+  CX = 8 * 8;
   CY = 3 * 8;
   Cursor(CX, CY);
-  Erase(CX, CY, CX + 3 * Width * 6, CY + Height);
-  char sTmp[3];
-  sprintf(sTmp, "W %i %1", Osc,WaveShape);
+  Erase(CX, CY, CX + 3 * Width * 7, CY + Height);
+  char sTmp[9];
+  sprintf(sTmp, "W %i %s", Osc,Shapes[WaveShape]);
   Print(sTmp);
   
   float Step1 = oscParams[Osc].Step1;

@@ -19,6 +19,7 @@ const boolean Debug =false;
 #define RESET PA1
 
 int DAC = PB6; //????
+
 int Gate1 = PB5;
 int Gate2 = PC13;
 byte CV1 = 1;

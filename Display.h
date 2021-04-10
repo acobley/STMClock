@@ -67,10 +67,11 @@ void DisplayVolume(int DisplayNum, int Row) {
   int CX = 0;
   int CY = (2 + Row) * 8;
   char sTmp[7];
+  int Volume = (DisplayNum/dacRange)*100;
   Cursor(CX, CY);
   Erase(CX, CY, CX + 7 * Width, CY + Height);
 
-  sprintf(sTmp, "V%i %i", Row, DisplayNum);
+  sprintf(sTmp, "V%i %i", Row, Volume);
   Print(sTmp);
   Refresh();
 }
