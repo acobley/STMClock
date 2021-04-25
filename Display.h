@@ -13,8 +13,8 @@ void DisplayChar(char C, byte x, byte y) {
 
 void DisplayTime(unsigned long currentMillis, unsigned long previousMillis, int Row) {
   //return; // Remove for Debug
-  int CX = 0 * 8;
-  int CY = Row * 8;
+  int CX = 0 * Width;
+  int CY = Row * Height;
   Cursor(CX, CY);
   Erase(CX, CY, CX + Width * 15, CY + Height);
   char sTmp[6];
@@ -26,8 +26,8 @@ void DisplayTime(unsigned long currentMillis, unsigned long previousMillis, int 
 
 void DisplayTime(long Time, int Row) {
   //return; // Remove for Debug
-  int CX = 5 * 8;
-  int CY = Row * 8;
+  int CX = 5 * Width;
+  int CY = Row * Height;
   Cursor(CX, CY);
   Erase(CX, CY, CX + Width * 15, CY + Height);
   char sTmp[6];
@@ -37,12 +37,44 @@ void DisplayTime(long Time, int Row) {
 
 }
 
-void DisplayWaveShape(int Osc, int Shape) {
-  int CX = 8 * 3;;
-  int CY = (6 + Osc) * 8;
+void DisplayWaveShapes(int Osc){
+  char sTmp[9];
+  int  WaveShape= oscParams[Osc1].WaveShape;
+  //DisplayWaveShape(Osc, WaveShape);
+  CX = 8* 8+1;
+  CY = 3 * 8+1;
   Cursor(CX, CY);
-  Erase(CX, CY, CX + 3 * Width, CY + Height);
-  Print(Shapes[Shape]);
+  Erase(CX, CY, CX + 1 * Width * 5, CY + Height);
+   sprintf(sTmp, "%i", Osc);
+  Print(sTmp);
+  
+  CX = 13 * 8-1;
+  CY = 3 * 8+1;
+  Cursor(CX, CY);
+  Erase(CX, CY, CX + 3 * Width * 5, CY + Height*2);
+  sprintf(sTmp, "%s", Shapes[WaveShape]);
+  Print(sTmp);
+   CY = 4 * 8;
+  Cursor(CX, CY);
+   WaveShape= oscParams[Osc2].WaveShape;
+  sprintf(sTmp, "%s", Shapes[WaveShape]);
+  Print(sTmp);
+   
+}
+
+
+void DisplayCurrentRad(float Rad1, float Rad2) {
+  int CX = 1;
+  char sTmp[10];
+  int CY = 6 * Height;
+  Cursor(CX, CY);
+  Erase(CX, CY, CX +  5* Width, CY + Height);
+  sprintf(sTmp, "%.2f", Rad1);
+  Print(sTmp);
+  Cursor(CX, CY+Height);
+  Erase(CX, CY+Height, CX +  5* Width, CY + 2*Height);
+  sprintf(sTmp, "%.2f", Rad2);
+  Print(sTmp);
   Refresh();
 
 }
@@ -52,12 +84,12 @@ void DisplayWaveShape(int Osc, int Shape) {
 void DisplayFrequency(float DisplayNum, int Row) {
   //return; // Remove for Debug
   int CX = 0;
-  int CY = Row * 8;
+  int CY = Row * Height;
   char sTmp[7];
   Cursor(CX, CY);
   Erase(CX, CY, CX + 7 * Width, CY + Height);
 
-  sprintf(sTmp, "F%i %.1f", 2, DisplayNum);
+  sprintf(sTmp, "F%i %.1f", Row+1, DisplayNum);
   Print(sTmp);
   Refresh();
 }
@@ -65,7 +97,7 @@ void DisplayFrequency(float DisplayNum, int Row) {
 void DisplayVolume(int DisplayNum, int Row) {
   //return; // Remove for Debug
   int CX = 0;
-  int CY = (2 + Row) * 8;
+  int CY = (2 + Row) * Width;
   char sTmp[7];
   int Volume = (DisplayNum/dacRange)*100;
   Cursor(CX, CY);
@@ -76,27 +108,28 @@ void DisplayVolume(int DisplayNum, int Row) {
   Refresh();
 }
 
-void DisplayShape(int DisplayNum, int DisplayNum2,int Row) {
+void DisplayShape(int DisplayNum,int Row) {
   //return; // Remove for Debug
   int CX = 0;
-  //int CY = (4 + Row) * 8;
-  int CY = 4  * 8;
+  int CY = (4 + Row) * Width;
+  //int CY = 4  * Width;
   Cursor(CX, CY);
-  Erase(CX, CY, CX + 8 * Width, CY + 2*Height);
+  Erase(CX, CY, CX + Width * Width, CY + Height);
   char sTmp[7];
-  sprintf(sTmp, "S%i %i", Row,  DisplayNum);
+  sprintf(sTmp, "S%i %i\%", Row,  DisplayNum);
   Print(sTmp);
-  Cursor(CX, CY+Height);
+  /*Cursor(CX, CY+Height);
   sprintf(sTmp, "S%i %i", Row,  DisplayNum2);
   Print(sTmp);
+  */
   Refresh();
 }
 
 
 
 void DisplayRatio(double DisplayNum) {
-  int CX = 8 * 8;
-  int CY = 2 * 8;
+  int CX = Width * 8;
+  int CY = 2 * Height;
   Cursor(CX, CY);
   Erase(CX, CY, CX + 4 * Width * 6, CY + Height);
   char sTmp[7];
@@ -108,7 +141,7 @@ void DisplayRatio(double DisplayNum) {
 
 
 void DisplayTempo() {
-  int CX = 8 * 8;
+  int CX = Width * 8;
   int CY = 0;
   Cursor(CX, CY);
   Erase(CX, CY, CX + Width * 3, CY + 2 * Height);
@@ -119,7 +152,7 @@ void DisplayTempo() {
 }
 
 void DisplayGateLength() {
-  CX = 14 * 8;
+  CX = 14 * Width;
   CY = 0;
   Cursor(CX , CY);
   Erase(CX , CY, CX + 2 * Width , CY + Height);
@@ -129,7 +162,7 @@ void DisplayGateLength() {
 
 
 void DisplayMode() {
-  int CX = 12 * 8;
+  int CX = 12 * Width;
   int CY = 0;
   Cursor(CX, CY);
   Erase(CX, CY, CX + 2 * Width, CY + Height);
@@ -141,10 +174,10 @@ void DisplayMode() {
 void DisplayBackground() {
   ClearBuffer();
   Refresh();
-  CX = 8 * 8;
-  CY = 3 * 8;
-  int CX2 = 15 * 8 + 7;
-  int CY2 = 7 * 8 + 7;
+  CX = Width * 8;
+  CY = 3 * Height;
+  int CX2 = 15 * Width + 7;
+  int CY2 = 7 * Height + 7;
   DrawMode(NORMAL);
   
     Line(CX , CY, CX2, CY );

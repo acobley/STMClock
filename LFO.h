@@ -1,41 +1,5 @@
 
 
-float step = Pi / (256.0);
-int Value = 0;
-
-
-float Wave = 0;
-int Square = 0;
-float Triangle = 0;
-float Cos = 0;
-float lastRad;
-
-/*
-   float rad = 0;
-  int Shape = 128.0;
-  float Step1 = 2 * Pi / Shape;
-  float Step2 = 2 * Pi / (512 - Shape);
-  float Rate = 0;
-*/
-
-
-typedef struct {
-  float rad;
-  int Shape;
-  float Step1;
-  float Step2;
-  float Rate;
-  int WaveShape;
-  int Volume;
-  long SamplesPhase1;
-  long SamplesPhase2;
-} oscParam ;
-
-oscParam oscParams[] = {{ 0.0, 2048, 2 * Pi / 2048.0, 2 * Pi / (2048), 40.0, 0, idacRange},
-  { 0.0, 2048, 2 * Pi / 2048.0, 2 * Pi / (2048), 160.0, 3, idacRange}
-};
-
-int Volume[2] = {idacRange, idacRange};
 
 void writeSin(float Value, int Channel) {
   int Out = (int)(Volume[Channel] * Value);
@@ -75,24 +39,16 @@ void DisplayWave(int Osc) {
   int CY = 3 * 8 + 1;
   int CX2 = 15 * 8 + 7 - 1;
   int CY2 = 7 * 8 + 7 - 1;
+  int  WaveShape= oscParams[Osc].WaveShape;
   long Samples = oscParams[Osc].SamplesPhase1+oscParams[Osc].SamplesPhase2;
   Erase(CX , CY, CX2 , CY2);
-  float rad = 0;
-  int  WaveShape= oscParams[Osc].WaveShape;
-  //DisplayWaveShape(Osc, WaveShape);
-  CX = 8 * 8;
-  CY = 3 * 8;
-  Cursor(CX, CY);
-  Erase(CX, CY, CX + 3 * Width * 7, CY + Height);
-  char sTmp[9];
-  sprintf(sTmp, "W %i %s", Osc,Shapes[WaveShape]);
-  Print(sTmp);
-  
+  float rad = oscParams[Osc].phaseShift;
+  DisplayWaveShapes(Osc);
   float Step1 = oscParams[Osc].Step1;
   float Step2 = oscParams[Osc].Step2;
   
   long Sample=0;
-  while (rad < twoPi) {
+  while (rad < (twoPi+oscParams[Osc].phaseShift)) {
     Square = (int)(rad / Pi);
     rad = rad + Square * Step1 + (1 - Square) * Step2;
     Sample++;
@@ -119,6 +75,8 @@ void DisplayWave(int Osc) {
     }
   }
 
+  Refresh();
+
 }
 
 
@@ -143,24 +101,24 @@ void setShape(int Osc) {
   oscParams[Osc].SamplesPhase2 = SamplesPhase2;
   oscParams[Osc].Step1 = Pi / SamplesPhase1;
   oscParams[Osc].Step2 = Pi / SamplesPhase2;
-  //DisplayFloat(oscParams[Osc].Step1,3);
-  //DisplayFloat(oscParams[Osc].Step2,4);
-  DisplayShape(SamplesPhase1, SamplesPhase2, Osc);
+
+  DisplayShape((int)(Percent*100), Osc);
   DisplayWave(Osc);
 }
 
-float ratio[] = {0.0625, 0.125, 0.25, 0.5, 1, 2, 3, 4, 8, 16, 32};
-int maxRatioCount = 11;
+float LfoRatio[] = {0.0625, 0.125, 0.25, 0.5, 1, 2, 3, 4, 8, 16, 32};
+int maxLfoRatioCount = 11;
 int CurrentNotePos[2] = {5, 5};
 
-void SetFrequency(int Tempo, int NotePos, int Osc) {
-  if (Ratio < 7) {
-    float L = 60.0 / Tempo * ratio[NotePos];
+void SetFrequency(int Tempo, int newLfoRatio, int Osc) {
+  if (newLfoRatio < maxLfoRatioCount) {
+    float L = 60.0 / Tempo * LfoRatio[newLfoRatio];
     float f = 1 / L;
     DisplayFrequency(f, Osc);
     DisplayVolume(Volume[Osc], Osc);
     int Samp = (int)round(2000.0 / f);
     oscParams[Osc].Rate = Samp;
+    oscParams[Osc].lfoRatio=newLfoRatio;
     setShape(Osc);
   }
 
@@ -180,6 +138,10 @@ void SetVolume(int sVolume, int Osc) {
 void oscReset() {
   oscParams[0].rad = 0.0;
   oscParams[1].rad = 0.0;
+  BeatPWMS.PWM1Counter = 0;
+  BeatPWMS.PWM2Counter = 0;
+  RachetPWMS.PWM1Counter =0;
+  RachetPWMS.PWM2Counter =0;
 }
 
 
@@ -193,8 +155,15 @@ void Osc(int Osc) {
   float Step2 = oscParams[Osc].Step2;
   int Square = (int)(rad / Pi);
   rad = rad + Square * Step1 + (1 - Square) * Step2;
-  if (rad > twoPi)
-    rad = 0.0;
+  if (rad > (twoPi)){
+    rad = 0;
+    oscParams[Osc].rad = rad;
+    /*
+    if (Osc==Osc1){
+      DisplayCurrentRad(oscParams[Osc1].rad,oscParams[Osc2].rad);
+    }
+    */
+  }
 
   oscParams[Osc].rad = rad;
 

@@ -118,7 +118,8 @@ void SetupTimers() {
 
 boolean rb = false;
 void IntReset() {
-  oscReset();
+  OscResetPromised=true;
+  //oscReset();
   digitalWrite(BUTLED3, rb);
   rb = !rb;
 
@@ -140,13 +141,11 @@ void setup() {
   setShape(1);
   digitalWrite(BUTLED3, false);
   DisplayBackground();
-  SetFrequency(Tempo, CurrentNotePos[0], 0);
-  SetFrequency(Tempo, CurrentNotePos[1], 1);
-  SetVolume(Volume[0], 0);
-  SetVolume(Volume[1], 1);
-  DisplayWaveShape(0, oscParams[0].WaveShape);
-  DisplayWaveShape(1, oscParams[0].WaveShape);
-  DisplayWave(0);
+  SetFrequency(Tempo, CurrentNotePos[0], Osc1);
+  SetFrequency(Tempo, CurrentNotePos[1], Osc2);
+  SetVolume(Volume[0], Osc1);
+  SetVolume(Volume[1], Osc2);
+  DisplayWave(Osc1);
 }
 
 
@@ -157,28 +156,30 @@ void loop() {
 
 boolean TState = false;
 short TCount = 0;
-void MasterClockInterrupt() {
 
+void MasterClockInterrupt() {
   if (Debug == true)
     digitalWrite(Gate1, TState);
   BeatGate();
   RachetGate();
   TState = !TState;
-
-
   Osc(0);
   Osc(1);
 }
 
 void BeatGate(void) {
   if (BeatPWMS.Phase == 0) { //first phase;
+    if ((BeatPWMS.PWM1Counter == 0) && (OscResetPromised==true)){
+      oscReset();
+      OscResetPromised=false;
+    }
     digitalWrite(BUTLED3, HIGH);
     if (Debug == false)
       digitalWrite(Gate1, HIGH);
     BeatPWMS.PWM1Counter++;
     if (BeatPWMS.PWM1Counter > BeatPWMS.PWM1) {
       BeatPWMS.Phase = 1;
-      BeatPWMS.PWM2Counter = 1;
+      BeatPWMS.PWM2Counter = 0;
       if (Debug == false)
         digitalWrite(Gate1, LOW);
       digitalWrite(BUTLED3, LOW);
@@ -194,7 +195,7 @@ void BeatGate(void) {
       if (Debug == false)
         digitalWrite(Gate1, HIGH);
       digitalWrite(BUTLED3, HIGH);
-      BeatPWMS.PWM1Counter = 1;
+      BeatPWMS.PWM1Counter = 0;
 
     }
   }
@@ -209,7 +210,7 @@ void RachetGate(void) {
     RachetPWMS.PWM1Counter++;
     if (RachetPWMS.PWM1Counter > RachetPWMS.PWM1) {
       RachetPWMS.Phase = 1;
-      RachetPWMS.PWM2Counter = 1;
+      RachetPWMS.PWM2Counter = 0;
       digitalWrite(Gate2, LOW);
 
     }
@@ -221,7 +222,7 @@ void RachetGate(void) {
     if (RachetPWMS.PWM2Counter > RachetPWMS.PWM2) {
       RachetPWMS.Phase = 0;
       digitalWrite(Gate2, HIGH);
-      RachetPWMS.PWM1Counter = 1;
+      RachetPWMS.PWM1Counter = 0;
 
     }
   }
@@ -357,58 +358,58 @@ void handleEnc1() {
       }
       break;
     case 2: //Frequency of F1
-      NewEncPos = encodeVal(CurrentNotePos[0], 1);
-      if (NewEncPos != CurrentNotePos[0]) {
+      NewEncPos = encodeVal(CurrentNotePos[Osc1], 1);
+      if (NewEncPos != CurrentNotePos[Osc1]) {
         if (NewEncPos < 0) {
           NewEncPos = 0;
         }
-        if (NewEncPos >= maxRatioCount ) { //See lfo.h
-          NewEncPos = maxRatioCount - 1;
+        if (NewEncPos >= maxLfoRatioCount ) { //See lfo.h
+          NewEncPos = maxLfoRatioCount - 1;
         }
-        CurrentNotePos[0] = NewEncPos;
-        SetFrequency(Tempo, CurrentNotePos[0], 0);
+        CurrentNotePos[Osc1] = NewEncPos;
+        SetFrequency(Tempo, CurrentNotePos[Osc1], Osc1);
       }
       break;
     case 3: //Frequency of F2
-      NewEncPos = encodeVal(CurrentNotePos[1], 1);
-      if (NewEncPos != CurrentNotePos[1]) {
+      NewEncPos = encodeVal(CurrentNotePos[Osc2], 1);
+      if (NewEncPos != CurrentNotePos[Osc2]) {
         if (NewEncPos < 0) {
           NewEncPos = 0;
         }
-        if (NewEncPos >= maxRatioCount ) { //See lfo.h
-          NewEncPos = maxRatioCount - 1;
+        if (NewEncPos >= maxLfoRatioCount ) { //See lfo.h
+          NewEncPos = maxLfoRatioCount - 1;
         }
-        CurrentNotePos[1] = NewEncPos;
-        SetFrequency(Tempo, CurrentNotePos[1], 1);
+        CurrentNotePos[Osc2] = NewEncPos;
+        SetFrequency(Tempo, CurrentNotePos[Osc2], Osc2);
       }
       break;
-    case 4:  //Waveshape F1
-      NewEncPos = encodeVal(oscParams[0].WaveShape, 1);
-      if (NewEncPos != oscParams[0].WaveShape) {
+    case 4:  //Wave F1
+      NewEncPos = encodeVal(oscParams[Osc1].WaveShape, 1);
+      if (NewEncPos != oscParams[Osc1].WaveShape) {
         if (NewEncPos < 0) {
           NewEncPos = 0;
         }
         if (NewEncPos >= 3) { //See lfo.h
           NewEncPos = 3;
         }
-        setWaveShape(0, NewEncPos);
-        LastOscDisp = 0;
-         DisplayWaveShape(0, NewEncPos);
+        setWaveShape(Osc1, NewEncPos);
+        LastOscDisp = Osc1;
+        //DisplayWaveShape(Osc1, NewEncPos);
       }
       break;
     case 5:  //Waveshape F1
-      NewEncPos = encodeVal(oscParams[0].Shape, 20);
-      if (NewEncPos != oscParams[0].Shape) {
+      NewEncPos = encodeVal(oscParams[Osc1].Shape, 20);
+      if (NewEncPos != oscParams[Osc1].Shape) {
         if (NewEncPos < 0) {
           NewEncPos = 0;
         }
-        if (NewEncPos >= 4094) { //See lfo.h
-          NewEncPos = 4094;
+        if (NewEncPos >= idacRange) { //See lfo.h
+          NewEncPos = idacRange;
         }
-        oscParams[0].Shape = NewEncPos;
-        LastOscDisp = 0;
-        setShape(0);
-        
+        oscParams[Osc1].Shape = NewEncPos;
+        LastOscDisp = Osc1;
+        setShape(Osc1);
+
       }
       break;
     default: break;
@@ -450,58 +451,58 @@ void handleEnc2() {
       break;
 
     case 2: //Volume  of F1
-      NewEncPos2 = encodeVal2(Volume[0], 10);
-      if (NewEncPos2 != Volume[0]) {
+      NewEncPos2 = encodeVal2(Volume[Osc1], 10);
+      if (NewEncPos2 != Volume[Osc1]) {
         if (NewEncPos2 < 0) {
           NewEncPos2 = 0;
         }
         if (NewEncPos2 >= 4094) { //See lfo.h
           NewEncPos2 = 4094;
         }
-        Volume[0] = NewEncPos2;
-        SetVolume(Volume[0], 0);
+        Volume[Osc1] = NewEncPos2;
+        SetVolume(Volume[Osc1], Osc1);
       }
       break;
     case 3: //Volume  of F2
-      NewEncPos2 = encodeVal2(Volume[1], 10);
-      if (NewEncPos2 != Volume[1]) {
+      NewEncPos2 = encodeVal2(Volume[Osc2], 10);
+      if (NewEncPos2 != Volume[Osc2]) {
         if (NewEncPos2 < 0) {
           NewEncPos2 = 0;
         }
-        if (NewEncPos2 >= 4094) { //See lfo.h
-          NewEncPos2 = 4094;
+        if (NewEncPos2 >= idacRange) { //See lfo.h
+          NewEncPos2 = idacRange;
         }
-        Volume[1] = NewEncPos2;
-        SetVolume(Volume[1], 1);
+        Volume[Osc2] = NewEncPos2;
+        SetVolume(Volume[Osc2], Osc2);
       }
       break;
     case 4:  //Waveshape F2
-      NewEncPos = encodeVal2(oscParams[1].WaveShape, 1);
-      if (NewEncPos != oscParams[1].WaveShape) {
+      NewEncPos = encodeVal2(oscParams[Osc2].WaveShape, 1);
+      if (NewEncPos != oscParams[Osc2].WaveShape) {
         if (NewEncPos < 0) {
           NewEncPos = 0;
         }
         if (NewEncPos >= 3) { //See lfo.h
           NewEncPos = 3;
         }
-        LastOscDisp = 1;
-        setWaveShape(1, NewEncPos);
-        DisplayWaveShape(1, NewEncPos);
+        LastOscDisp = Osc2;
+        setWaveShape(Osc2, NewEncPos);
+        //DisplayWaveShape(Osc2, NewEncPos);
       }
       break;
     case 5:  //Waveshape F2
-      NewEncPos = encodeVal2(oscParams[1].Shape, 20);
-      if (NewEncPos != oscParams[1].Shape) {
+      NewEncPos = encodeVal2(oscParams[Osc2].Shape, 20);
+      if (NewEncPos != oscParams[Osc2].Shape) {
         if (NewEncPos < 0) {
           NewEncPos = 0;
         }
-        if (NewEncPos >= 4094) { //See lfo.h
-          NewEncPos = 4094;
+        if (NewEncPos >= idacRange) { //See lfo.h
+          NewEncPos = idacRange;
         }
-        oscParams[1].Shape = NewEncPos;
-        LastOscDisp = 1;
-        setShape(1);
-        
+        oscParams[Osc2].Shape = NewEncPos;
+        LastOscDisp = Osc2;
+        setShape(Osc2);
+
       }
       break;
     default: break;
@@ -509,8 +510,22 @@ void handleEnc2() {
 
 }
 
+void CheckParams() {
+  if (oscParams[Osc1].lfoRatio < 0) {
+    oscParams[Osc1].lfoRatio  = 0;
+  }
+  if (oscParams[Osc2].lfoRatio  < 0) {
+    oscParams[Osc2].Rate = 0;
+  }
 
+  if (oscParams[Osc1].lfoRatio > maxLfoRatioCount) {
+    oscParams[Osc1].lfoRatio  = maxLfoRatioCount;
+  }
+  if (oscParams[Osc2].lfoRatio > maxLfoRatioCount) {
+    oscParams[Osc2].lfoRatio  = maxLfoRatioCount;
+  }
 
+}
 
 void ReadEEPROM() {
   int addr = 0;
@@ -529,4 +544,25 @@ void ReadEEPROM() {
   NewEncPos = Tempo;
   encPos2 = GateLength;
   NewEncPos2 = GateLength;
+  addr = addr + 1;
+  oscParams[Osc1] = { 0.0, 2048, 2 * Pi / 2048.0, 2 * Pi / (2048), 40.0, 0, idacRange, 0};
+  oscParams[Osc2] = { 0.0, 2048, 2 * Pi / 2048.0, 2 * Pi / (2048), 160.0, 3, idacRange, 0};
+  oscParams[Osc1].lfoRatio = EEPROM.read(addr) ; addr + 1;
+  oscParams[Osc2].lfoRatio = EEPROM.read(addr) ; addr + 1;
+  CheckParams();
+  SetFrequency(Tempo, oscParams[Osc1].lfoRatio, Osc1);
+  SetFrequency(Tempo, oscParams[Osc2].lfoRatio, Osc2);
+  /*
+    oscParams[Osc1].Shape=EEPROM.read(addr) ; addr + 1;
+
+    oscParams[Osc1].WaveShape=EEPROM.read(addr) ;addr + 1;
+    oscParams[Osc1].Volume= EEPROM.read(addr) ; addr + 1;
+    oscParams[Osc1].phaseShift= EEPROM.read(addr) ; addr + 1;
+
+     oscParams[Osc2].Shape=EEPROM.read(addr) ; addr + 1;
+    oscParams[Osc2].Rate=EEPROM.read(addr) ; addr + 1;
+    oscParams[Osc2].WaveShape=EEPROM.read(addr) ;addr + 1;
+    oscParams[Osc2].Volume= EEPROM.read(addr) ; addr + 1;
+    oscParams[Osc2].phaseShift= EEPROM.read(addr) ; addr + 1;
+  */
 }

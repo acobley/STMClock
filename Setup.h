@@ -25,10 +25,10 @@ int Gate2 = PC13;
 byte CV1 = 1;
 byte CV2 = 0;
 
-const char *Modes[] = {"T", "R", "F1", "F2", "W","S"};
+
 
 byte Mode = 0;
-byte MaxMode = 5;
+
 
 int encAVal,  encBVal;
 int encAVal2,  encBVal2;
@@ -61,7 +61,7 @@ ClockStruct SequenceClock;
 
 
 
-
+boolean OscResetPromised=false;
 
 
 
@@ -75,10 +75,7 @@ long RachetTime = 1000000L * 60 / Tempo;
 short GateLength = 4;
 long SeqGateTime = BaseTime * (GateLength / 8);
 long ms15 = 015000L;
-const short MinTempo = 30;
-const short MaxTempo = 600;
-const double Ratios[] = {1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6, 7, 8};
-const short RatiosArrayLength = 11;
+
 short currentRatioPos = 2;
 float Ratio = Ratios[currentRatioPos];
 //short maxRatio = 10;
@@ -110,17 +107,49 @@ volatile int hOctave;
 volatile int hNote;
 volatile int houtValue;
 
+
+//Display
 int CX = 0;
 int CY = 0;
-int Width = 8;
-int Height = 8;
 
-int PlotWidth= 8*8-2;
-int PlotHeight=5*8-2;
-int PlotMiddle =PlotHeight/2+3*8;
-int PlotLeft=PlotWidth+1;
+
+
 
 int LastOscDisp=0; //keeps a record of the last osc to change shape or waveshape
+
+//LFO
+
+
+
+float Wave = 0;
+int Square = 0;
+float Triangle = 0;
+float Cos = 0;
+float lastRad;
+
+
+
+typedef struct {
+  float rad;
+  int Shape;
+  float Step1;
+  float Step2;
+  float Rate;
+  int lfoRatio;
+  int WaveShape;
+  int Volume;
+  long SamplesPhase1;
+  long SamplesPhase2;
+  float phaseShift;
+} oscParam ;
+
+oscParam oscParams[] = {{ 0.0, 2048, 2 * Pi / 2048.0, 2 * Pi / (2048), 40.0, 0, idacRange,0},
+  { 0.0, 2048, 2 * Pi / 2048.0, 2 * Pi / (2048), 160.0, 3, idacRange,0}
+};
+
+int Volume[2] = {idacRange, idacRange};
+
+
 
 void SetupEncoders() {
   pinMode(encA, INPUT);
@@ -236,4 +265,21 @@ void WriteEEProm() {
   addr = addr + 1;
   EEPROM.write(addr, GateLength);
 
+ addr = addr + 1;
+ EEPROM.write(oscParams[Osc1].lfoRatio,addr) ; addr + 1;
+ EEPROM.write(oscParams[Osc2].lfoRatio,addr) ; addr + 1;
+
+ /*
+  EEPROM.write(oscParams[Osc1].Shape,addr) ; addr + 1;
+  
+ EEPROM.write(oscParams[Osc1].WaveShape,addr) ;addr + 1;
+  EEPROM.write(oscParams[Osc1].Volume,addr) ; addr + 1;
+  EEPROM.write(oscParams[Osc1].phaseShift,addr) ; addr + 1;
+
+  EEPROM.write(oscParams[Osc2].Shape,addr) ; addr + 1;
+;
+ EEPROM.write(oscParams[Osc2].WaveShape,addr) ;addr + 1;
+  EEPROM.write(oscParams[Osc2].Volume,addr) ; addr + 1;
+  EEPROM.write(oscParams[Osc2].phaseShift,addr) ; addr + 1;
+  */
 }
