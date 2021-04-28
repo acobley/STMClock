@@ -34,21 +34,27 @@ void plotWavePoint(long Sample, float Value, long Samples) {
 
 
 void DisplayWave(int Osc) {
+  
   float Wave = 0;
   int CX = 8 * 8 + 1;
   int CY = 3 * 8 + 1;
   int CX2 = 15 * 8 + 7 - 1;
   int CY2 = 7 * 8 + 7 - 1;
+  
   int  WaveShape= oscParams[Osc].WaveShape;
   long Samples = oscParams[Osc].SamplesPhase1+oscParams[Osc].SamplesPhase2;
   Erase(CX , CY, CX2 , CY2);
-  float rad = oscParams[Osc].phaseShift;
+  float rad = 0;
+  
   DisplayWaveShapes(Osc);
+  
   float Step1 = oscParams[Osc].Step1;
   float Step2 = oscParams[Osc].Step2;
-  
+  int Square=0;
   long Sample=0;
-  while (rad < (twoPi+oscParams[Osc].phaseShift)) {
+  //while (rad < (twoPi+oscParams[Osc].phaseShift)) {
+  
+  while (rad < (twoPi)) {  
     Square = (int)(rad / Pi);
     rad = rad + Square * Step1 + (1 - Square) * Step2;
     Sample++;
@@ -108,7 +114,7 @@ void setShape(int Osc) {
 
 float LfoRatio[] = {0.0625, 0.125, 0.25, 0.5, 1, 2, 3, 4, 8, 16, 32};
 int maxLfoRatioCount = 11;
-int CurrentNotePos[2] = {5, 5};
+int LfoRatioPos[2] = {5, 5};
 
 void SetFrequency(int Tempo, int newLfoRatio, int Osc) {
   if (newLfoRatio < maxLfoRatioCount) {
@@ -142,6 +148,8 @@ void oscReset() {
   BeatPWMS.PWM2Counter = 0;
   RachetPWMS.PWM1Counter =0;
   RachetPWMS.PWM2Counter =0;
+  BeatPWMS.Phase = 0;
+  RachetPWMS.Phase = 0;
 }
 
 

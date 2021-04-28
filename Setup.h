@@ -115,7 +115,7 @@ int CY = 0;
 
 
 
-int LastOscDisp=0; //keeps a record of the last osc to change shape or waveshape
+int LastOscDisp=Osc1; //keeps a record of the last osc to change shape or waveshape
 
 //LFO
 
@@ -143,8 +143,30 @@ typedef struct {
   float phaseShift;
 } oscParam ;
 
-oscParam oscParams[] = {{ 0.0, 2048, 2 * Pi / 2048.0, 2 * Pi / (2048), 40.0, 0, idacRange,0},
-  { 0.0, 2048, 2 * Pi / 2048.0, 2 * Pi / (2048), 160.0, 3, idacRange,0}
+oscParam oscParams[] = {{ 0.0, // Rad
+                          2048, // Shape (default 50% of dac range)
+                          2 * Pi / 2048.0, // Rads in the first part
+                          2 * Pi / (2048), // Rads in the second part
+                          40.0,  // Rate of LFO
+                          0,  // lfoRatio Which division of tempo to use 
+                          0, // WaveShape Sin,Square,Triangle, COS 
+                          idacRange, //Volume
+                          0,//Number samples phase 1
+                          0,//Number samples phase 2
+                          0.0 // PhaseShift
+                          },
+  { 0.0, // Rad
+                          2048, // Shape (default 50% of dac range)
+                          2 * Pi / 2048.0, // Rads in the first part
+                          2 * Pi / (2048), // Rads in the second part
+                          40.0,  // Rate of LFO
+                          0,  // lfoRatio Which division of tempo to use 
+                          0, // WaveShape Sin,Square,Triangle, COS 
+                          idacRange, //Volume
+                          0,//Number samples phase 1
+                          0,//Number samples phase 2
+                          0.0 // PhaseShift
+                          }
 };
 
 int Volume[2] = {idacRange, idacRange};

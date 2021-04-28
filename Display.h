@@ -44,7 +44,7 @@ void DisplayWaveShapes(int Osc){
   CX = 8* 8+1;
   CY = 3 * 8+1;
   Cursor(CX, CY);
-  Erase(CX, CY, CX + 1 * Width * 5, CY + Height);
+  Erase(CX, CY, CX + 1 * Width * 1, CY + Height);
    sprintf(sTmp, "%i", Osc);
   Print(sTmp);
   
@@ -52,8 +52,10 @@ void DisplayWaveShapes(int Osc){
   CY = 3 * 8+1;
   Cursor(CX, CY);
   Erase(CX, CY, CX + 3 * Width * 5, CY + Height*2);
-  sprintf(sTmp, "%s", Shapes[WaveShape]);
+  
+  sprintf(sTmp, "%i", WaveShape);
   Print(sTmp);
+  return;
    CY = 4 * 8;
   Cursor(CX, CY);
    WaveShape= oscParams[Osc2].WaveShape;
@@ -131,7 +133,7 @@ void DisplayRatio(double DisplayNum) {
   int CX = Width * 8;
   int CY = 2 * Height;
   Cursor(CX, CY);
-  Erase(CX, CY, CX + 4 * Width * 6, CY + Height);
+  Erase(CX, CY, CX + Width * 6, CY + Height);
   char sTmp[7];
   sprintf(sTmp, "Rat %.1f", DisplayNum);
   Print(sTmp);
@@ -188,4 +190,5 @@ void DisplayBackground() {
   DisplayTempo();
   DisplayRatio(Ratios[currentRatioPos]);
   DisplayMode();
+  Refresh();
 }

@@ -141,10 +141,10 @@ void setup() {
   setShape(1);
   digitalWrite(BUTLED3, false);
   DisplayBackground();
-  SetFrequency(Tempo, CurrentNotePos[0], Osc1);
-  SetFrequency(Tempo, CurrentNotePos[1], Osc2);
-  SetVolume(Volume[0], Osc1);
-  SetVolume(Volume[1], Osc2);
+  SetFrequency(Tempo, LfoRatioPos[Osc1], Osc1);
+  SetFrequency(Tempo, LfoRatioPos[Osc2], Osc2);
+  SetVolume(Volume[Osc1], Osc1);
+  SetVolume(Volume[Osc2], Osc2);
   DisplayWave(Osc1);
 }
 
@@ -170,15 +170,15 @@ void MasterClockInterrupt() {
 void BeatGate(void) {
   if (BeatPWMS.Phase == 0) { //first phase;
     if ((BeatPWMS.PWM1Counter == 0) && (OscResetPromised==true)){
-      oscReset();
-      OscResetPromised=false;
+      //oscReset();
+      //OscResetPromised=false;
     }
     digitalWrite(BUTLED3, HIGH);
     if (Debug == false)
       digitalWrite(Gate1, HIGH);
     BeatPWMS.PWM1Counter++;
     if (BeatPWMS.PWM1Counter > BeatPWMS.PWM1) {
-      BeatPWMS.Phase = 1;
+      BeatPWMS.Phase = 0;
       BeatPWMS.PWM2Counter = 0;
       if (Debug == false)
         digitalWrite(Gate1, LOW);
@@ -191,7 +191,7 @@ void BeatGate(void) {
     digitalWrite(BUTLED3, LOW);
     BeatPWMS.PWM2Counter++;
     if (BeatPWMS.PWM2Counter > BeatPWMS.PWM2) {
-      BeatPWMS.Phase = 0;
+      BeatPWMS.Phase = 1;
       if (Debug == false)
         digitalWrite(Gate1, HIGH);
       digitalWrite(BUTLED3, HIGH);
@@ -209,7 +209,7 @@ void RachetGate(void) {
     digitalWrite(Gate2, HIGH);
     RachetPWMS.PWM1Counter++;
     if (RachetPWMS.PWM1Counter > RachetPWMS.PWM1) {
-      RachetPWMS.Phase = 1;
+      RachetPWMS.Phase = 0;
       RachetPWMS.PWM2Counter = 0;
       digitalWrite(Gate2, LOW);
 
@@ -243,7 +243,7 @@ void setTempo(int newTempo) {
   //CalcTCounters(BaseTime, MainTimer, &SequencePWMS, SeqGateTime);
   Tempo2 = Ratio * Tempo;
   DisplayTempo() ;
-  SetFrequency(Tempo, CurrentNotePos[0], LastOscDisp);
+  SetFrequency(Tempo, LfoRatioPos[Osc1], LastOscDisp);
   //SetFrequency(Tempo, CurrentNotePos[1], 1);
 }
 
@@ -358,29 +358,29 @@ void handleEnc1() {
       }
       break;
     case 2: //Frequency of F1
-      NewEncPos = encodeVal(CurrentNotePos[Osc1], 1);
-      if (NewEncPos != CurrentNotePos[Osc1]) {
+      NewEncPos = encodeVal(LfoRatioPos[Osc1], 1);
+      if (NewEncPos != LfoRatioPos[Osc1]) {
         if (NewEncPos < 0) {
           NewEncPos = 0;
         }
         if (NewEncPos >= maxLfoRatioCount ) { //See lfo.h
           NewEncPos = maxLfoRatioCount - 1;
         }
-        CurrentNotePos[Osc1] = NewEncPos;
-        SetFrequency(Tempo, CurrentNotePos[Osc1], Osc1);
+        LfoRatioPos[Osc1] = NewEncPos;
+        SetFrequency(Tempo, LfoRatioPos[Osc1], Osc1);
       }
       break;
     case 3: //Frequency of F2
-      NewEncPos = encodeVal(CurrentNotePos[Osc2], 1);
-      if (NewEncPos != CurrentNotePos[Osc2]) {
+      NewEncPos = encodeVal(LfoRatio[Osc2], 1);
+      if (NewEncPos != LfoRatioPos[Osc2]) {
         if (NewEncPos < 0) {
           NewEncPos = 0;
         }
         if (NewEncPos >= maxLfoRatioCount ) { //See lfo.h
           NewEncPos = maxLfoRatioCount - 1;
         }
-        CurrentNotePos[Osc2] = NewEncPos;
-        SetFrequency(Tempo, CurrentNotePos[Osc2], Osc2);
+        LfoRatioPos[Osc2] = NewEncPos;
+        SetFrequency(Tempo, LfoRatioPos[Osc2], Osc2);
       }
       break;
     case 4:  //Wave F1
@@ -528,6 +528,7 @@ void CheckParams() {
 }
 
 void ReadEEPROM() {
+  
   int addr = 0;
   Tempo = EEPROM.read(addr);
   if ((Tempo < MinTempo) || (Tempo > MaxTempo))
@@ -544,9 +545,33 @@ void ReadEEPROM() {
   NewEncPos = Tempo;
   encPos2 = GateLength;
   NewEncPos2 = GateLength;
+  oscParams[Osc1] =  { 0.0, // Rad
+                          2048, // Shape (default 50% of dac range)
+                          2 * Pi / 2048.0, // Rads in the first part
+                          2 * Pi / (2048), // Rads in the second part
+                          40.0,  // Rate of LFO
+                          0,  // lfoRatio Which division of tempo to use 
+                          0, // WaveShape Sin,Square,Triangle, COS 
+                          idacRange, //Volume
+                          0,//Number samples phase 1
+                          0,//Number samples phase 2
+                          0.0 // PhaseShift
+                          };
+  oscParams[Osc2] =  { 0.0, // Rad
+                          2048, // Shape (default 50% of dac range)
+                          2 * Pi / 2048.0, // Rads in the first part
+                          2 * Pi / (2048), // Rads in the second part
+                          40.0,  // Rate of LFO
+                          0,  // lfoRatio Which division of tempo to use 
+                          0, // WaveShape Sin,Square,Triangle, COS 
+                          idacRange, //Volume
+                          0,//Number samples phase 1
+                          0,//Number samples phase 2
+                          0.0 // PhaseShift
+                          };
+  return;
   addr = addr + 1;
-  oscParams[Osc1] = { 0.0, 2048, 2 * Pi / 2048.0, 2 * Pi / (2048), 40.0, 0, idacRange, 0};
-  oscParams[Osc2] = { 0.0, 2048, 2 * Pi / 2048.0, 2 * Pi / (2048), 160.0, 3, idacRange, 0};
+  
   oscParams[Osc1].lfoRatio = EEPROM.read(addr) ; addr + 1;
   oscParams[Osc2].lfoRatio = EEPROM.read(addr) ; addr + 1;
   CheckParams();
