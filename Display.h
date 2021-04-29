@@ -53,9 +53,9 @@ void DisplayWaveShapes(int Osc){
   Cursor(CX, CY);
   Erase(CX, CY, CX + 3 * Width * 5, CY + Height*2);
   
-  sprintf(sTmp, "%i", WaveShape);
+  sprintf(sTmp, "%s", Shapes[WaveShape]);
   Print(sTmp);
-  return;
+  
    CY = 4 * 8;
   Cursor(CX, CY);
    WaveShape= oscParams[Osc2].WaveShape;
