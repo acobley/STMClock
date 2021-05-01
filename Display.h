@@ -11,6 +11,24 @@ void DisplayChar(char C, byte x, byte y) {
   interrupts();
 }
 
+
+void DisplayPWMS(PWMStruct *PWMS, int Osc){
+  int CX = 8*Width;
+  int CY = (4 + 2*Osc) * Height;
+  
+  Cursor(CX, CY);
+  Erase(CX, CY, CX + Width * Width, CY + 2*Height);
+  char sTmp[7];
+  sprintf(sTmp, "S%i", PWMS->PWM1);
+  Print(sTmp);
+  CY = (4 + 2*Osc+1) * Height;
+  
+  Cursor(CX, CY);
+  sprintf(sTmp, "S%i", PWMS->PWM2);
+  Print(sTmp);
+  
+}
+
 void DisplayTime(unsigned long currentMillis, unsigned long previousMillis, int Row) {
   //return; // Remove for Debug
   int CX = 0 * Width;

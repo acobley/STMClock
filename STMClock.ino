@@ -53,6 +53,7 @@ double Div = 1 / 72.0;
 void CalcTCounters( long Time, PWMStruct *PWMS, long Pm1) {
   PWMS->PWM1 = Pm1 / 500;
   PWMS->PWM2 = (Time - Pm1) / 500;
+  
   /*
     DisplayTime(Time, 3);
     DisplayTime(Pm1, 4);
@@ -106,11 +107,11 @@ void SetupTimers() {
   //SetUpTimer(SequenceTimer, SequenceGateOn, TIMER_OUTPUT_COMPARE);
   SetUpTimer(&MainClock, MainTimer, MasterClockInterrupt, TIMER_OUTPUT_COMPARE);
   setTempo(Tempo);  //Will also calculate timers.
-  BeatPWMS.PWM1Counter = 0;
-  BeatPWMS.PWM2Counter = 0;
+  BeatPWMS.PWM1Counter = 1;
+  BeatPWMS.PWM2Counter = 1;
   BeatPWMS.Phase = 0;
-  RachetPWMS.PWM1Counter = 0;
-  RachetPWMS.PWM2Counter = 0;
+  RachetPWMS.PWM1Counter = 1;
+  RachetPWMS.PWM2Counter = 1;
   RachetPWMS.Phase = 0;
   MainTimer.resume();
 
@@ -158,8 +159,10 @@ boolean TState = false;
 short TCount = 0;
 
 void MasterClockInterrupt() {
-  if (Debug == true)
+  
+  if (Debug == true){
     digitalWrite(Gate1, TState);
+  }
   BeatGate();
   RachetGate();
   TState = !TState;
@@ -168,17 +171,19 @@ void MasterClockInterrupt() {
 }
 
 void BeatGate(void) {
+  
   if (BeatPWMS.Phase == 0) { //first phase;
     if ((BeatPWMS.PWM1Counter == 0) && (OscResetPromised==true)){
-      //oscReset();
-      //OscResetPromised=false;
+      oscReset();
+      OscResetPromised=false;
     }
+   
     digitalWrite(BUTLED3, HIGH);
     if (Debug == false)
       digitalWrite(Gate1, HIGH);
     BeatPWMS.PWM1Counter++;
     if (BeatPWMS.PWM1Counter > BeatPWMS.PWM1) {
-      BeatPWMS.Phase = 0;
+      BeatPWMS.Phase = 1;
       BeatPWMS.PWM2Counter = 0;
       if (Debug == false)
         digitalWrite(Gate1, LOW);
@@ -191,7 +196,7 @@ void BeatGate(void) {
     digitalWrite(BUTLED3, LOW);
     BeatPWMS.PWM2Counter++;
     if (BeatPWMS.PWM2Counter > BeatPWMS.PWM2) {
-      BeatPWMS.Phase = 1;
+      BeatPWMS.Phase = 0;
       if (Debug == false)
         digitalWrite(Gate1, HIGH);
       digitalWrite(BUTLED3, HIGH);
@@ -209,7 +214,7 @@ void RachetGate(void) {
     digitalWrite(Gate2, HIGH);
     RachetPWMS.PWM1Counter++;
     if (RachetPWMS.PWM1Counter > RachetPWMS.PWM1) {
-      RachetPWMS.Phase = 0;
+      RachetPWMS.Phase = 1;
       RachetPWMS.PWM2Counter = 0;
       digitalWrite(Gate2, LOW);
 
@@ -240,10 +245,12 @@ void setTempo(int newTempo) {
   BeatTime = 1000000L * 60 / Tempo;
   //DisplayTime (BeatTime );
   CalcTCounters(BeatTime, &BeatPWMS, (long)ms15);
+  DisplayPWMS(&BeatPWMS,0);
   //CalcTCounters(BaseTime, MainTimer, &SequencePWMS, SeqGateTime);
   Tempo2 = Ratio * Tempo;
   DisplayTempo() ;
-  SetFrequency(Tempo, LfoRatioPos[Osc1], LastOscDisp);
+  SetFrequency(Tempo, LfoRatioPos[Osc1], Osc1);
+  SetFrequency(Tempo, LfoRatioPos[Osc2], Osc2);
   //SetFrequency(Tempo, CurrentNotePos[1], 1);
 }
 
