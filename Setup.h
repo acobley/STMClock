@@ -33,7 +33,7 @@ byte Mode = 0;
 int encAVal,  encBVal;
 int encAVal2,  encBVal2;
 
-int encALast=0;
+int encALast[]={0,0,0,0,0,0};
 int encALast2[]={0,0,0,0,0,0};
 
 HardwareTimer MainTimer(1);

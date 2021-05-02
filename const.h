@@ -20,3 +20,8 @@ const int PlotWidth= 8*8-2;
 const int PlotHeight=5*8-2;
 const int PlotMiddle =PlotHeight/2+3*8;
 const int PlotLeft=PlotWidth+1;
+
+//Debounce times.
+const long interval = 500;
+const long enc1Interval = 50;
+const long enc2Interval = 50;

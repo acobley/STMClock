@@ -40,8 +40,6 @@ unsigned long currentMillis = millis();
 unsigned long previousMillis = 0;
 unsigned long enc2Millis = 0;
 unsigned long enc1Millis = 0;
-const long interval = 500;
-const long enc2Interval = 50;
 
 //Low level routines to handle the timers.
 //See https://www.st.com/content/ccc/resource/training/technical/product_training/c4/1b/56/83/3a/a1/47/64/STM32L4_WDG_TIMERS_GPTIM.pdf/files/STM32L4_WDG_TIMERS_GPTIM.pdf/jcr:content/translations/en.STM32L4_WDG_TIMERS_GPTIM.pdf
@@ -53,7 +51,7 @@ double Div = 1 / 72.0;
 void CalcTCounters( long Time, PWMStruct *PWMS, long Pm1) {
   PWMS->PWM1 = Pm1 / 500;
   PWMS->PWM2 = (Time - Pm1) / 500;
-  
+
   /*
     DisplayTime(Time, 3);
     DisplayTime(Pm1, 4);
@@ -119,7 +117,7 @@ void SetupTimers() {
 
 boolean rb = false;
 void IntReset() {
-  OscResetPromised=true;
+  OscResetPromised = true;
   //oscReset();
   digitalWrite(BUTLED3, rb);
   rb = !rb;
@@ -159,8 +157,8 @@ boolean TState = false;
 short TCount = 0;
 
 void MasterClockInterrupt() {
-  
-  if (Debug == true){
+
+  if (Debug == true) {
     digitalWrite(Gate1, TState);
   }
   BeatGate();
@@ -171,13 +169,13 @@ void MasterClockInterrupt() {
 }
 
 void BeatGate(void) {
-  
+
   if (BeatPWMS.Phase == 0) { //first phase;
-    if ((BeatPWMS.PWM1Counter == 0) && (OscResetPromised==true)){
+    if ((BeatPWMS.PWM1Counter == 0) && (OscResetPromised == true)) {
       oscReset();
-      OscResetPromised=false;
+      OscResetPromised = false;
     }
-   
+
     digitalWrite(BUTLED3, HIGH);
     if (Debug == false)
       digitalWrite(Gate1, HIGH);
@@ -245,7 +243,8 @@ void setTempo(int newTempo) {
   BeatTime = 1000000L * 60 / Tempo;
   //DisplayTime (BeatTime );
   CalcTCounters(BeatTime, &BeatPWMS, (long)ms15);
-  DisplayPWMS(&BeatPWMS,0);
+  if (Debug == true)
+    DisplayPWMS(&BeatPWMS, 0);
   //CalcTCounters(BaseTime, MainTimer, &SequencePWMS, SeqGateTime);
   Tempo2 = Ratio * Tempo;
   DisplayTempo() ;
@@ -294,13 +293,13 @@ void iMode() {
 int encodeVal(int val, int Diff) {
   encAVal = digitalRead(encA);
   encBVal = digitalRead(encB);
-  if (encAVal != encALast) {
+  if (encAVal != encALast[Mode]) {
     if (encAVal == encBVal) {
       val = val - Diff;
     } else {
       val = val + Diff;
     }
-    encALast = encAVal;
+    encALast[Mode] = encAVal;
 
   }
   return val;
@@ -326,14 +325,14 @@ int encodeVal2(int val, int Diff) {
 /*      Handle Encoder 1*/
 
 void handleEnc1() {
-  /*
-    currentMillis = millis();
 
-    if (currentMillis - enc1Millis < enc2Interval) {
+  enc1Millis = millis();
+
+  if (enc1Millis -currentMillis  < enc1Interval) {
     return;
-    }
-    enc1Millis=currentMillis;
-  */
+  }
+  currentMillis= enc1Millis;
+
   switch (Mode) {
 
     case 0:  //Tempo
@@ -378,7 +377,7 @@ void handleEnc1() {
       }
       break;
     case 3: //Frequency of F2
-      NewEncPos = encodeVal(LfoRatio[Osc2], 1);
+      NewEncPos = encodeVal(LfoRatioPos[Osc2], 1);
       if (NewEncPos != LfoRatioPos[Osc2]) {
         if (NewEncPos < 0) {
           NewEncPos = 0;
@@ -535,7 +534,7 @@ void CheckParams() {
 }
 
 void ReadEEPROM() {
-  
+
   int addr = 0;
   Tempo = EEPROM.read(addr);
   if ((Tempo < MinTempo) || (Tempo > MaxTempo))
@@ -553,32 +552,32 @@ void ReadEEPROM() {
   encPos2 = GateLength;
   NewEncPos2 = GateLength;
   oscParams[Osc1] =  { 0.0, // Rad
-                          2048, // Shape (default 50% of dac range)
-                          2 * Pi / 2048.0, // Rads in the first part
-                          2 * Pi / (2048), // Rads in the second part
-                          40.0,  // Rate of LFO
-                          0,  // lfoRatio Which division of tempo to use 
-                          0, // WaveShape Sin,Square,Triangle, COS 
-                          idacRange, //Volume
-                          0,//Number samples phase 1
-                          0,//Number samples phase 2
-                          0.0 // PhaseShift
-                          };
+                       2048, // Shape (default 50% of dac range)
+                       2 * Pi / 2048.0, // Rads in the first part
+                       2 * Pi / (2048), // Rads in the second part
+                       40.0,  // Rate of LFO
+                       0,  // lfoRatio Which division of tempo to use
+                       0, // WaveShape Sin,Square,Triangle, COS
+                       idacRange, //Volume
+                       0,//Number samples phase 1
+                       0,//Number samples phase 2
+                       0.0 // PhaseShift
+                     };
   oscParams[Osc2] =  { 0.0, // Rad
-                          2048, // Shape (default 50% of dac range)
-                          2 * Pi / 2048.0, // Rads in the first part
-                          2 * Pi / (2048), // Rads in the second part
-                          40.0,  // Rate of LFO
-                          0,  // lfoRatio Which division of tempo to use 
-                          0, // WaveShape Sin,Square,Triangle, COS 
-                          idacRange, //Volume
-                          0,//Number samples phase 1
-                          0,//Number samples phase 2
-                          0.0 // PhaseShift
-                          };
+                       2048, // Shape (default 50% of dac range)
+                       2 * Pi / 2048.0, // Rads in the first part
+                       2 * Pi / (2048), // Rads in the second part
+                       40.0,  // Rate of LFO
+                       0,  // lfoRatio Which division of tempo to use
+                       0, // WaveShape Sin,Square,Triangle, COS
+                       idacRange, //Volume
+                       0,//Number samples phase 1
+                       0,//Number samples phase 2
+                       0.0 // PhaseShift
+                     };
   return;
   addr = addr + 1;
-  
+
   oscParams[Osc1].lfoRatio = EEPROM.read(addr) ; addr + 1;
   oscParams[Osc2].lfoRatio = EEPROM.read(addr) ; addr + 1;
   CheckParams();
