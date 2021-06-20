@@ -293,13 +293,13 @@ void iMode() {
 int encodeVal(int val, int Diff) {
   encAVal = digitalRead(encA);
   encBVal = digitalRead(encB);
-  if (encAVal != encALast[Mode]) {
+  if (encAVal != encALast[0]) {
     if (encAVal == encBVal) {
       val = val - Diff;
     } else {
       val = val + Diff;
     }
-    encALast[Mode] = encAVal;
+    encALast[0] = encAVal;
 
   }
   return val;
@@ -310,13 +310,13 @@ int encodeVal(int val, int Diff) {
 int encodeVal2(int val, int Diff) {
   encAVal2 = digitalRead(enc2A);
   encBVal2 = digitalRead(enc2B);
-  if (encAVal2 != encALast2[Mode]) {
+  if (encAVal2 != encALast2[0]) {
     if (encAVal2 == encBVal2) {
       val = val - Diff;
     } else {
       val = val + Diff;
     }
-    encALast2[Mode] = encAVal2;
+    encALast2[0] = encAVal2;
 
   }
   return val;
@@ -325,14 +325,14 @@ int encodeVal2(int val, int Diff) {
 /*      Handle Encoder 1*/
 
 void handleEnc1() {
-
+/*
   enc1Millis = millis();
 
   if (enc1Millis -currentMillis  < enc1Interval) {
     return;
   }
   currentMillis= enc1Millis;
-
+*/
   switch (Mode) {
 
     case 0:  //Tempo
